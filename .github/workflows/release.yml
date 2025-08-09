@@ -23,7 +23,9 @@ jobs:
         id: changelog
         uses: ./
         with:
-          api_base_url: https://gaccode.com/claudecode
+          api_base_url: https://llm.jp.one2x.ai 
+          model: 'us.anthropic.claude-sonnet-4-20250514-v1:0'
+          small_fast_model: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           output_file: 'RELEASE_CHANGELOG.md'
