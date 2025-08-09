@@ -1,6 +1,6 @@
 {
   "name": "claude-code-changelog",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A GitHub Action that generates changelogs using Claude Code",
   "main": "src/main.ts",
   "scripts": {
