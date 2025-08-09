@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+*.tgz
+*.tar.gz
+.claude
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db

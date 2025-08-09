@@ -1,0 +1,96 @@
+name: Auto Release with Changelog
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Matches v1.0.0, v2.1.3, etc.
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git analysis
+          
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Generate Changelog
+        id: changelog
+        uses: ./
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          output_file: 'RELEASE_CHANGELOG.md'
+          format: 'markdown'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Read generated changelog
+        id: read_changelog
+        run: |
+          if [ -f "RELEASE_CHANGELOG.md" ]; then
+            echo "Changelog file found"
+            # Use a delimiter to handle multiline content
+            {
+              echo 'changelog<<EOF'
+              cat RELEASE_CHANGELOG.md
+              echo EOF
+            } >> $GITHUB_OUTPUT
+          else
+            echo "No changelog file found, using commit messages"
+            echo 'changelog=Automated release from tag ${{ steps.version.outputs.version }}' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Changes
+            
+            ${{ steps.read_changelog.outputs.changelog }}
+            
+            ---
+            
+            **Full Changelog**: https://github.com/mistricky/ccc/compare/${{ steps.changelog.outputs.from_tag || 'HEAD~1' }}...${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+      - name: Upload changelog as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-${{ steps.version.outputs.version }}
+          path: |
+            RELEASE_CHANGELOG.md
+          retention-days: 90
+
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes analyzed**: ${{ steps.changelog.outputs.changes_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release created**: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changelog Preview" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`markdown" >> $GITHUB_STEP_SUMMARY
+          head -20 RELEASE_CHANGELOG.md >> $GITHUB_STEP_SUMMARY || echo "No changelog generated" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
