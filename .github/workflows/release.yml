@@ -40,19 +40,26 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
-      - name: Read generated changelog
+      - name: Process changelog output
         id: read_changelog
         run: |
-          if [ -f "RELEASE_CHANGELOG.md" ]; then
-            echo "Changelog file found"
-            # Use a delimiter to handle multiline content
+          # Use the changelog output directly from CCC action
+          if [ -n "${{ steps.changelog.outputs.changelog }}" ]; then
+            echo "Using CCC generated changelog"
+            {
+              echo 'changelog<<EOF'
+              echo '${{ steps.changelog.outputs.changelog }}'
+              echo EOF
+            } >> $GITHUB_OUTPUT
+          elif [ -f "RELEASE_CHANGELOG.md" ]; then
+            echo "Using changelog file"
             {
               echo 'changelog<<EOF'
               cat RELEASE_CHANGELOG.md
               echo EOF
             } >> $GITHUB_OUTPUT
           else
-            echo "No changelog file found, using commit messages"
+            echo "No changelog generated, using fallback"
             echo 'changelog=Automated release from tag ${{ steps.version.outputs.version }}' >> $GITHUB_OUTPUT
           fi
 
@@ -64,13 +71,15 @@ jobs:
           tag_name: ${{ steps.version.outputs.version }}
           release_name: Release ${{ steps.version.outputs.version }}
           body: |
-            ## Changes
+            ## 🤖 AI-Generated Changelog
             
             ${{ steps.read_changelog.outputs.changelog }}
             
             ---
             
-            **Full Changelog**: https://github.com/mistricky/ccc/compare/${{ steps.changelog.outputs.from_tag || 'HEAD~1' }}...${{ steps.version.outputs.version }}
+            📊 **Release Stats**: ${{ steps.changelog.outputs.changes_count }} changes analyzed  
+            🔗 **Full Changelog**: https://github.com/mistricky/ccc/compare/${{ github.event.before || 'HEAD~1' }}...${{ steps.version.outputs.version }}  
+            ⚡ **Generated with**: [CCC (Claude Code Changelog)](https://github.com/mistricky/ccc)
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
 
