@@ -152,8 +152,7 @@ runs:
         vertex_project_id: ${{ inputs.vertex_project_id }}
         vertex_region: ${{ inputs.vertex_region }}
         model: ${{ inputs.model }}
-        mode: 'script'
-        custom_instructions: |
+        direct_prompt: |
           Read the changelog generation prompt from /tmp/changelog_prompt.md and generate a professional changelog based on the git analysis provided.
           
           Output the generated changelog to a file named 'generated_changelog.md'.
