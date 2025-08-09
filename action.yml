@@ -65,17 +65,19 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Get previous tag
+      id: previoustag
+      uses: WyriHaximus/github-action-get-previous-tag@v1
+      with:
+        fallback: '0.0.0'
+
     - name: Prepare git diff for Claude analysis
       id: prepare
       shell: bash
       run: |
         # Get the from tag if not specified
         if [ -z "${{ inputs.from_tag }}" ]; then
-          FROM_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$FROM_TAG" ]; then
-            echo "No tags found, using initial commit"
-            FROM_TAG=$(git rev-list --max-parents=0 HEAD)
-          fi
+          FROM_TAG="${{ steps.previoustag.outputs.tag }}"
         else
           FROM_TAG="${{ inputs.from_tag }}"
         fi

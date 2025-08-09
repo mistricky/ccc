@@ -41,13 +41,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          output_file: 'CHANGELOG.md'
-          format: 'markdown'
         
-      - name: Use Generated Changelog
+      - name: View Generated Changelog
         run: |
-          echo "Generated changelog:"
-          cat CHANGELOG.md
+          echo "Changelog generated and output above"
 ```
 
 ### Advanced Usage
