@@ -4,15 +4,16 @@ A GitHub Action that automatically generates changelogs using Claude Code's AI c
 
 ## Overview
 
-CCC (Claude Code Changelog) is a GitHub Action that leverages Claude Code's powerful AI to automatically analyze code changes and generate high-quality changelogs.
+CCC (Claude Code Changelog) is a GitHub Action that leverages the official [Claude Code Action](https://github.com/anthropics/claude-code-action) to automatically analyze code changes and generate high-quality changelogs using Claude AI.
 
 ## Features
 
-- 🤖 AI-powered changelog generation using Claude Code
-- 📝 Automatically generates structured, readable changelogs
-- 🔄 Seamless integration with GitHub Actions
-- 🎯 Supports various version management workflows
-- ⚡ Fast and accurate change analysis
+- 🤖 **AI-powered changelog generation** using the official Claude Code Action
+- 📝 **Automatic git analysis** from tag to tag or commit range
+- 🔄 **Multiple authentication methods** (Anthropic API, AWS Bedrock, Google Vertex AI)
+- 🎯 **Structured changelog format** with conventional categories (Added, Changed, Fixed, etc.)
+- ⚡ **Zero configuration** - works out of the box with sensible defaults
+- 🛡️ **Fallback mechanism** - generates basic changelog if AI processing fails
 
 ## Usage
 
