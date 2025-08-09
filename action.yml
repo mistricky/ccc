@@ -27,14 +27,6 @@ inputs:
     description: 'End reference for diff'
     required: false
     default: 'HEAD'
-  output_file:
-    description: 'Output changelog file path'
-    required: false
-    default: 'CHANGELOG.md'
-  format:
-    description: 'Output format (markdown, json)'
-    required: false
-    default: 'markdown'
   model:
     description: 'Claude model to use'
     required: false
@@ -60,12 +52,15 @@ inputs:
     default: 'us-central1'
 
 outputs:
-  changelog:
-    description: 'Generated changelog content'
-  changelog_file:
-    description: 'Path to the generated changelog file'
   changes_count:
     description: 'Number of changes analyzed'
+    value: ${{ steps.output.outputs.changes_count }}
+  from_tag:
+    description: 'Starting tag used for analysis'
+    value: ${{ steps.output.outputs.from_tag }}
+  to_ref:
+    description: 'Ending reference used for analysis'  
+    value: ${{ steps.output.outputs.to_ref }}
 
 runs:
   using: 'composite'
@@ -138,7 +133,7 @@ runs:
         - From: $FROM_TAG
         - To: $TO_REF
 
-        Start by running git commands to analyze the changes, then write the changelog to 'generated_changelog.md'.
+        Start by running git commands to analyze the changes, then output the final changelog content directly.
         EOF
 
     - name: Generate changelog with Claude Code Base Action
@@ -160,53 +155,17 @@ runs:
         allowed_tools: "Bash(git:*),Read,Write,Edit"
         prompt_file: /tmp/changelog_prompt.md
 
-    - name: Process and output results
+    - name: Set outputs
       id: output
       shell: bash
       run: |
-        # Check if changelog was generated
-        if [ -f "generated_changelog.md" ]; then
-          echo "Changelog generated successfully"
-          
-          # Read the generated changelog
-          CHANGELOG_CONTENT=$(cat generated_changelog.md)
-          
-          # Handle output file
-          OUTPUT_FILE="${{ inputs.output_file }}"
-          if [ "$OUTPUT_FILE" != "stdout" ]; then
-            cp generated_changelog.md "$OUTPUT_FILE"
-            echo "Changelog written to $OUTPUT_FILE"
-          fi
-          
-          # Set outputs using heredoc to handle multiline content
-          {
-            echo 'changelog<<EOF'
-            cat generated_changelog.md
-            echo EOF
-          } >> $GITHUB_OUTPUT
-          
-          echo "changelog_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
-          echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
-          
-        else
-          echo "Failed to generate changelog, creating fallback"
-          
-          # Create fallback changelog
-          FALLBACK="## Changes\n\nAutomated release with ${{ steps.prepare.outputs.changes_count }} commits.\n\nFrom: ${{ steps.prepare.outputs.from_tag }}\nTo: ${{ steps.prepare.outputs.to_ref }}"
-          
-          echo -e "$FALLBACK" > fallback_changelog.md
-          
-          OUTPUT_FILE="${{ inputs.output_file }}"
-          if [ "$OUTPUT_FILE" != "stdout" ]; then
-            cp fallback_changelog.md "$OUTPUT_FILE"
-          fi
-          
-          {
-            echo 'changelog<<EOF'
-            echo -e "$FALLBACK"
-            echo EOF
-          } >> $GITHUB_OUTPUT
-          
-          echo "changelog_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
-          echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
-        fi
+        # Get the changelog content from Claude's output (should be printed to stdout)
+        # The claude-code-base-action will have already executed and generated output
+        
+        # Set basic outputs
+        echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
+        echo "from_tag=${{ steps.prepare.outputs.from_tag }}" >> $GITHUB_OUTPUT  
+        echo "to_ref=${{ steps.prepare.outputs.to_ref }}" >> $GITHUB_OUTPUT
+        
+        # Note: The actual changelog content will come from Claude's direct output
+        # No file persistence needed - Claude will output the changelog directly
