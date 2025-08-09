@@ -95,56 +95,49 @@ runs:
         COMMIT_COUNT=$(git rev-list --count "$FROM_TAG..$TO_REF" 2>/dev/null || echo "0")
         echo "changes_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
         
-        # Create analysis prompt
-        cat > /tmp/changelog_prompt.md << 'EOF'
-        You are a technical writer creating a changelog for a software project. Based on the git changes provided, generate a well-structured changelog entry.
+        # Create analysis prompt for Claude
+        cat > /tmp/changelog_prompt.md << EOF
+        You are a technical writer creating a changelog for a software project. 
 
-        Please analyze the following git changes and generate a professional changelog in markdown format:
+        Your task is to:
+        1. Use the git tools available to you to analyze the changes from $FROM_TAG to $TO_REF
+        2. Read the commit logs, file changes, and diffs to understand what changed
+        3. Generate a professional changelog in markdown format
+        4. Write the final changelog to a file named 'generated_changelog.md'
 
-        ## Commits:
-        ```
-        $(cat /tmp/commits.log 2>/dev/null || echo "No commits found")
-        ```
+        Please analyze the git changes and create a changelog with these guidelines:
 
-        ## File Changes Summary:
-        ```
-        $(cat /tmp/diff_stat.log 2>/dev/null || echo "No file changes found")
-        ```
+        ## Categorization:
+        Use standard changelog categories:
+        - **Added**: New features
+        - **Changed**: Changes in existing functionality  
+        - **Deprecated**: Soon-to-be removed features
+        - **Removed**: Removed features
+        - **Fixed**: Bug fixes
+        - **Security**: Security improvements
 
-        ## Detailed Changes:
-        ```
-        $(head -200 /tmp/full_diff.log 2>/dev/null || echo "No detailed changes available")
-        ```
+        ## Writing Style:
+        - Write clear, user-focused descriptions
+        - Explain what changed from a user's perspective
+        - Note any breaking changes or migration requirements
+        - Use concise bullet points starting with action verbs
+        - Group related changes together
+        - Focus on semantic meaning rather than technical implementation
 
-        ## Instructions:
-        1. **Categorize changes** using standard changelog categories:
-           - **Added**: New features
-           - **Changed**: Changes in existing functionality
-           - **Deprecated**: Soon-to-be removed features
-           - **Removed**: Removed features
-           - **Fixed**: Bug fixes
-           - **Security**: Security improvements
+        ## Output Format:
+        Generate only the changelog content in markdown format without explanatory text or metadata. Do not include version numbers or dates.
 
-        2. **Write clear, user-focused descriptions** that explain:
-           - What changed from a user's perspective
-           - Why it matters
-           - Any breaking changes or migration notes
+        ## Git Analysis Range:
+        - From: $FROM_TAG
+        - To: $TO_REF
 
-        3. **Use consistent formatting**:
-           - Each item should be a concise bullet point
-           - Start with an action verb when possible
-           - Group related changes together
-
-        4. **Focus on semantic meaning** rather than technical implementation details
-
-        Please generate only the changelog content in markdown format without any explanatory text or metadata. Do not include version numbers or dates.
+        Start by running git commands to analyze the changes, then write the changelog to 'generated_changelog.md'.
         EOF
 
-    - name: Generate changelog with Claude Code
+    - name: Generate changelog with Claude Code Base Action
       id: claude
-      uses: anthropics/claude-code-action@beta 
+      uses: anthropics/claude-code-base-action@beta
       with:
-        github_token: ${{ inputs.github_token }}
         anthropic_api_key: ${{ inputs.anthropic_api_key }}
         use_bedrock: ${{ inputs.use_bedrock }}
         use_vertex: ${{ inputs.use_vertex }}
@@ -152,12 +145,8 @@ runs:
         vertex_project_id: ${{ inputs.vertex_project_id }}
         vertex_region: ${{ inputs.vertex_region }}
         model: ${{ inputs.model }}
-        direct_prompt: |
-          Read the changelog generation prompt from /tmp/changelog_prompt.md and generate a professional changelog based on the git analysis provided.
-          
-          Output the generated changelog to a file named 'generated_changelog.md'.
-          
-          The changelog should be well-structured, use appropriate markdown formatting, and follow conventional changelog standards.
+        allowed_tools: "Bash(git:*),Read,Write,Edit"
+        prompt_file: /tmp/changelog_prompt.md
 
     - name: Process and output results
       id: output
