@@ -16,7 +16,7 @@
     "ai",
     "typescript"
   ],
-  "author": "CCC Team",
+  "author": "mistricky",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.10.1",
@@ -28,9 +28,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
-    "eslint": "^8.56.0",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0"
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "typescript": "^5.3.0"
   }
 }

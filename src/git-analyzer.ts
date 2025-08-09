@@ -1,4 +1,4 @@
-import { simpleGit, SimpleGit, LogResult, DiffResult } from 'simple-git';
+import { simpleGit, SimpleGit, DiffResultTextFile } from 'simple-git';
 
 export interface GitChange {
   file: string;
@@ -44,24 +44,17 @@ export class GitAnalyzer {
   async getChangesBetween(fromTag: string, toRef: string): Promise<AnalyzedChanges> {
     try {
       // Get commit log
-      const log: LogResult = await this.git.log({ 
+      const log = await this.git.log({ 
         from: fromTag, 
-        to: toRef,
-        format: {
-          hash: '%H',
-          date: '%ai',
-          message: '%s',
-          author_name: '%an',
-          author_email: '%ae'
-        }
+        to: toRef
       });
 
       const commits: GitCommit[] = log.all.map(commit => ({
         hash: commit.hash,
         date: commit.date,
         message: commit.message,
-        author: (commit as any).author_name,
-        email: (commit as any).author_email
+        author: commit.author_name,
+        email: commit.author_email
       }));
 
       // Get diff summary
@@ -75,21 +68,27 @@ export class GitAnalyzer {
       for (const file of diffSummary.files) {
         try {
           const diff = await this.git.diff([`${fromTag}..${toRef}`, '--', file.file]);
+          const insertions = (file as DiffResultTextFile).insertions || 0;
+          const deletions = (file as DiffResultTextFile).deletions || 0;
+          
           files.push({
             file: file.file,
-            insertions: file.insertions,
-            deletions: file.deletions,
+            insertions,
+            deletions,
             diff
           });
-          totalInsertions += file.insertions;
-          totalDeletions += file.deletions;
+          totalInsertions += insertions;
+          totalDeletions += deletions;
         } catch (error) {
           console.warn(`Failed to get diff for ${file.file}:`, error);
           // Add file without diff if we can't get it
+          const insertions = (file as DiffResultTextFile).insertions || 0;
+          const deletions = (file as DiffResultTextFile).deletions || 0;
+          
           files.push({
             file: file.file,
-            insertions: file.insertions,
-            deletions: file.deletions,
+            insertions,
+            deletions,
             diff: ''
           });
         }

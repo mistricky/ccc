@@ -1,5 +1,5 @@
 import { ClaudeClient } from './claude-client';
-import { AnalyzedChanges, GitCommit, GitChange } from './git-analyzer';
+import { AnalyzedChanges } from './git-analyzer';
 
 export interface ChangelogSection {
   type: 'added' | 'changed' | 'deprecated' | 'removed' | 'fixed' | 'security';
@@ -24,7 +24,7 @@ export class ChangelogGenerator {
       return this.formatAsJson(response.content, changes);
     }
     
-    return this.formatAsMarkdown(response.content, changes);
+    return this.formatAsMarkdown(response.content);
   }
 
   private buildPrompt(changes: AnalyzedChanges): string {
@@ -94,7 +94,7 @@ Please generate a changelog entry in markdown format with appropriate sections a
 Return only the changelog content without any explanatory text or metadata.`;
   }
 
-  private formatAsMarkdown(content: string, changes: AnalyzedChanges): string {
+  private formatAsMarkdown(content: string): string {
     // Clean up the content and ensure proper markdown formatting
     let formatted = content.trim();
     

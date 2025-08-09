@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 import { ChangelogGenerator } from './changelog-generator';
 import { GitAnalyzer } from './git-analyzer';
 import { createClaudeClient } from './claude-client';
@@ -86,6 +85,7 @@ async function run(): Promise<void> {
   }
 }
 
-if (import.meta.main) {
+// Run if this is the main module
+if (process.argv[1] && process.argv[1].endsWith('/main.ts')) {
   run();
 }
