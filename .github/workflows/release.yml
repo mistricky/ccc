@@ -23,6 +23,7 @@ jobs:
         id: changelog
         uses: ./
         with:
+          from_tag: v0.1.15 
           api_base_url: https://llm.jp.one2x.ai 
           model: 'us.anthropic.claude-sonnet-4-20250514-v1:0'
           small_fast_model: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
