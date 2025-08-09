@@ -23,6 +23,7 @@ jobs:
         id: changelog
         uses: ./
         with:
+          api_base_url: https://gaccode.com/claudecode
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           output_file: 'RELEASE_CHANGELOG.md'
