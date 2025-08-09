@@ -89,7 +89,7 @@ runs:
         echo "Getting changes from $FROM_TAG to $TO_REF"
         
         # Create comprehensive diff analysis
-        git log --oneline "$FROM_TAG..$TO_REF" > /tmp/commits.log || true
+        git log --pretty=format:"%h - %s (%an, %ar)" "$FROM_TAG..$TO_REF" > /tmp/commits.log || true
         git diff --stat "$FROM_TAG..$TO_REF" > /tmp/diff_stat.log || true
         git diff "$FROM_TAG..$TO_REF" > /tmp/full_diff.log || true
         
@@ -97,43 +97,49 @@ runs:
         COMMIT_COUNT=$(git rev-list --count "$FROM_TAG..$TO_REF" 2>/dev/null || echo "0")
         echo "changes_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
         
-        # Create analysis prompt for Claude
+        # Create analysis prompt for Claude with actual commit data
         cat > /tmp/changelog_prompt.md << EOF
-        You are a technical writer creating a changelog for a software project. 
+        You are a technical writer creating a changelog for a software project.
 
-        Your task is to:
-        1. Use the git tools available to you to analyze the changes from $FROM_TAG to $TO_REF
-        2. Read the commit logs, file changes, and diffs to understand what changed
-        3. Generate a professional changelog in markdown format
-        4. Write the final changelog to a file named 'generated_changelog.md'
+        Please analyze the following git changes and generate a professional changelog in markdown format.
 
-        Please analyze the git changes and create a changelog with these guidelines:
+        ## Commits from $FROM_TAG to $TO_REF:
+        \`\`\`
+        $(cat /tmp/commits.log 2>/dev/null || echo "No commits found")
+        \`\`\`
 
-        ## Categorization:
-        Use standard changelog categories:
-        - **Added**: New features
-        - **Changed**: Changes in existing functionality  
-        - **Deprecated**: Soon-to-be removed features
-        - **Removed**: Removed features
-        - **Fixed**: Bug fixes
-        - **Security**: Security improvements
+        ## File Changes Summary:
+        \`\`\`
+        $(cat /tmp/diff_stat.log 2>/dev/null || echo "No file changes found")
+        \`\`\`
 
-        ## Writing Style:
-        - Write clear, user-focused descriptions
-        - Explain what changed from a user's perspective
-        - Note any breaking changes or migration requirements
-        - Use concise bullet points starting with action verbs
-        - Group related changes together
-        - Focus on semantic meaning rather than technical implementation
+        ## Detailed Changes (first 200 lines):
+        \`\`\`
+        $(head -200 /tmp/full_diff.log 2>/dev/null || echo "No detailed changes available")
+        \`\`\`
 
-        ## Output Format:
-        Generate only the changelog content in markdown format without explanatory text or metadata. Do not include version numbers or dates.
+        ## Instructions:
+        1. **Categorize changes** using standard changelog categories:
+           - **Added**: New features
+           - **Changed**: Changes in existing functionality
+           - **Deprecated**: Soon-to-be removed features
+           - **Removed**: Removed features
+           - **Fixed**: Bug fixes
+           - **Security**: Security improvements
 
-        ## Git Analysis Range:
-        - From: $FROM_TAG
-        - To: $TO_REF
+        2. **Write clear, user-focused descriptions** that explain:
+           - What changed from a user's perspective
+           - Why it matters
+           - Any breaking changes or migration notes
 
-        Start by running git commands to analyze the changes, then output the final changelog content directly.
+        3. **Use consistent formatting**:
+           - Each item should be a concise bullet point
+           - Start with an action verb when possible
+           - Group related changes together
+
+        4. **Focus on semantic meaning** rather than technical implementation details
+
+        Generate only the changelog content in markdown format without any explanatory text or metadata. Do not include version numbers or dates.
         EOF
 
     - name: Generate changelog with Claude Code Base Action
