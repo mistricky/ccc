@@ -1,6 +1,6 @@
 name: 'Claude Code Changelog'
 description: 'Generate changelog using Claude Code based on git diff from last tag'
-author: 'CCC Team'
+author: 'mistricky'
 branding:
   icon: 'file-text'
   color: 'orange'
@@ -17,7 +17,7 @@ inputs:
     description: 'Start tag for diff (defaults to latest tag)'
     required: false
   to_ref:
-    description: 'End reference for diff (defaults to HEAD)'
+    description: 'End reference for diff'
     required: false
     default: 'HEAD'
   output_file:
@@ -63,31 +63,150 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v1
+    - name: Prepare git diff for Claude analysis
+      id: prepare
+      shell: bash
+      run: |
+        # Get the from tag if not specified
+        if [ -z "${{ inputs.from_tag }}" ]; then
+          FROM_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$FROM_TAG" ]; then
+            echo "No tags found, using initial commit"
+            FROM_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+        else
+          FROM_TAG="${{ inputs.from_tag }}"
+        fi
+        
+        TO_REF="${{ inputs.to_ref }}"
+        
+        echo "from_tag=$FROM_TAG" >> $GITHUB_OUTPUT
+        echo "to_ref=$TO_REF" >> $GITHUB_OUTPUT
+        
+        # Get git log and diff
+        echo "Getting changes from $FROM_TAG to $TO_REF"
+        
+        # Create comprehensive diff analysis
+        git log --oneline "$FROM_TAG..$TO_REF" > /tmp/commits.log || true
+        git diff --stat "$FROM_TAG..$TO_REF" > /tmp/diff_stat.log || true
+        git diff "$FROM_TAG..$TO_REF" > /tmp/full_diff.log || true
+        
+        # Count commits and files
+        COMMIT_COUNT=$(git rev-list --count "$FROM_TAG..$TO_REF" 2>/dev/null || echo "0")
+        echo "changes_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+        
+        # Create analysis prompt
+        cat > /tmp/changelog_prompt.md << 'EOF'
+        You are a technical writer creating a changelog for a software project. Based on the git changes provided, generate a well-structured changelog entry.
+
+        Please analyze the following git changes and generate a professional changelog in markdown format:
+
+        ## Commits:
+        ```
+        $(cat /tmp/commits.log 2>/dev/null || echo "No commits found")
+        ```
+
+        ## File Changes Summary:
+        ```
+        $(cat /tmp/diff_stat.log 2>/dev/null || echo "No file changes found")
+        ```
+
+        ## Detailed Changes:
+        ```
+        $(head -200 /tmp/full_diff.log 2>/dev/null || echo "No detailed changes available")
+        ```
+
+        ## Instructions:
+        1. **Categorize changes** using standard changelog categories:
+           - **Added**: New features
+           - **Changed**: Changes in existing functionality
+           - **Deprecated**: Soon-to-be removed features
+           - **Removed**: Removed features
+           - **Fixed**: Bug fixes
+           - **Security**: Security improvements
+
+        2. **Write clear, user-focused descriptions** that explain:
+           - What changed from a user's perspective
+           - Why it matters
+           - Any breaking changes or migration notes
+
+        3. **Use consistent formatting**:
+           - Each item should be a concise bullet point
+           - Start with an action verb when possible
+           - Group related changes together
+
+        4. **Focus on semantic meaning** rather than technical implementation details
+
+        Please generate only the changelog content in markdown format without any explanatory text or metadata. Do not include version numbers or dates.
+        EOF
+
+    - name: Generate changelog with Claude Code
+      id: claude
+      uses: anthropics/claude-code-action@v1
       with:
-        bun-version: latest
-    
-    - name: Install dependencies
-      run: bun install
+        github_token: ${{ inputs.github_token }}
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
+        use_bedrock: ${{ inputs.use_bedrock }}
+        use_vertex: ${{ inputs.use_vertex }}
+        bedrock_region: ${{ inputs.bedrock_region }}
+        vertex_project_id: ${{ inputs.vertex_project_id }}
+        vertex_region: ${{ inputs.vertex_region }}
+        model: ${{ inputs.model }}
+        mode: 'script'
+        custom_instructions: |
+          Read the changelog generation prompt from /tmp/changelog_prompt.md and generate a professional changelog based on the git analysis provided.
+          
+          Output the generated changelog to a file named 'generated_changelog.md'.
+          
+          The changelog should be well-structured, use appropriate markdown formatting, and follow conventional changelog standards.
+
+    - name: Process and output results
+      id: output
       shell: bash
-      working-directory: ${{ github.action_path }}
-    
-    - name: Generate changelog
-      run: bun run src/main.ts
-      shell: bash
-      working-directory: ${{ github.action_path }}
-      env:
-        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
-        INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
-        INPUT_FROM_TAG: ${{ inputs.from_tag }}
-        INPUT_TO_REF: ${{ inputs.to_ref }}
-        INPUT_OUTPUT_FILE: ${{ inputs.output_file }}
-        INPUT_FORMAT: ${{ inputs.format }}
-        INPUT_MODEL: ${{ inputs.model }}
-        INPUT_USE_BEDROCK: ${{ inputs.use_bedrock }}
-        INPUT_USE_VERTEX: ${{ inputs.use_vertex }}
-        INPUT_BEDROCK_REGION: ${{ inputs.bedrock_region }}
-        INPUT_VERTEX_PROJECT_ID: ${{ inputs.vertex_project_id }}
-        INPUT_VERTEX_REGION: ${{ inputs.vertex_region }}
-        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        # Check if changelog was generated
+        if [ -f "generated_changelog.md" ]; then
+          echo "Changelog generated successfully"
+          
+          # Read the generated changelog
+          CHANGELOG_CONTENT=$(cat generated_changelog.md)
+          
+          # Handle output file
+          OUTPUT_FILE="${{ inputs.output_file }}"
+          if [ "$OUTPUT_FILE" != "stdout" ]; then
+            cp generated_changelog.md "$OUTPUT_FILE"
+            echo "Changelog written to $OUTPUT_FILE"
+          fi
+          
+          # Set outputs using heredoc to handle multiline content
+          {
+            echo 'changelog<<EOF'
+            cat generated_changelog.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+          
+          echo "changelog_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
+          
+        else
+          echo "Failed to generate changelog, creating fallback"
+          
+          # Create fallback changelog
+          FALLBACK="## Changes\n\nAutomated release with ${{ steps.prepare.outputs.changes_count }} commits.\n\nFrom: ${{ steps.prepare.outputs.from_tag }}\nTo: ${{ steps.prepare.outputs.to_ref }}"
+          
+          echo -e "$FALLBACK" > fallback_changelog.md
+          
+          OUTPUT_FILE="${{ inputs.output_file }}"
+          if [ "$OUTPUT_FILE" != "stdout" ]; then
+            cp fallback_changelog.md "$OUTPUT_FILE"
+          fi
+          
+          {
+            echo 'changelog<<EOF'
+            echo -e "$FALLBACK"
+            echo EOF
+          } >> $GITHUB_OUTPUT
+          
+          echo "changelog_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
+        fi
