@@ -137,9 +137,8 @@ runs:
     - name: Generate changelog with Claude Code Base Action
       id: claude
       uses: anthropics/claude-code-base-action@beta
-      env:
-        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
       with:
+        anthropic_api_key: ${{ inputs.anthropic_api_key }}
         use_bedrock: ${{ inputs.use_bedrock }}
         use_vertex: ${{ inputs.use_vertex }}
         bedrock_region: ${{ inputs.bedrock_region }}
