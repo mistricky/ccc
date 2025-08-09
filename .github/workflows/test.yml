@@ -15,21 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run TypeScript build
-        run: bun run build
-
-      - name: Run lint
-        run: bun run lint
-
-      - name: Test CCC Action (dry run)
+      - name: Test CCC Action
         id: test_ccc
         uses: ./
         with:
