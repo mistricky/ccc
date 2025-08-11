@@ -66,6 +66,7 @@ runs:
   using: 'composite'
   steps:
     - name: Get previous tag
+      shell: bash
       id: prev_tag
       run: |
         CURRENT_TAG="${GITHUB_REF##*/}"
