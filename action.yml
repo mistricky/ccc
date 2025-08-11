@@ -140,8 +140,8 @@ runs:
         allowed_tools: "Bash(git:*),Read,Write,Edit"
         prompt_file: /tmp/changelog_prompt.md
 
-    - name: Set outputs
-      id: output
+    - name: Extract outputs
+      id: extract_output
       if: steps.claude.outputs.conclusion == 'success'
       uses: actions/github-script@v7
       with: 
@@ -151,3 +151,13 @@ runs:
           const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
 
           return executionLog[executionLog.length - 1].result
+
+    - name: Set result output
+      id: output
+      run: |
+        CHANGELOG="${{ steps.extract_output.outputs.result }}"
+        CHANGELOG="${CHANGELOG//'%'/'%25'}"
+        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+
+        echo "result=$CHANGELOG" >> $GITHUB_OUTPUT
