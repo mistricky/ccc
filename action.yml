@@ -157,7 +157,7 @@ runs:
       shell: bash
       run: |
         CHANGELOG='${{ steps.extract_output.outputs.result }}'
-        CHANGELOG="$(sed -e 's/^"//' -e 's/"$//' <<<"$CHANGELOG")"
+        CHANGELOG='$(sed -e 's/^"//' -e 's/"$//' <<<"$CHANGELOG")'
         CHANGELOG="${CHANGELOG//'%'/'%25'}"
         CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
         CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
