@@ -118,7 +118,7 @@ runs:
 
         4. **Focus on semantic meaning** rather than technical implementation details
 
-        Output ONLY the changelog content in markdown format. Do not include any explanatory text, metadata, introductory phrases, or concluding remarks. Start directly with the changelog categories and items. Do not include version numbers or dates.
+        Output ONLY the changelog content in markdown format. Do NOT include any explanatory text, metadata, introductory phrases like "Based on the git analysis" or "Here's the changelog", or concluding remarks. Start IMMEDIATELY with the changelog categories and items (e.g., "## Added"). Do not include version numbers or dates. Do not preface your response with any text whatsoever.
         EOF
 
     - name: Generate changelog with Claude Code Base Action
