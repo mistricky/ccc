@@ -81,6 +81,8 @@ runs:
     - name: Prepare git diff for Claude analysis
       shell: bash
       run: |
+        FROM_TAG=''
+
         if [ -z "${{ inputs.from_tag }}" ]; then
           FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
         else
