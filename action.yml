@@ -154,6 +154,6 @@ runs:
           const executionFile = '${{ steps.claude.outputs.execution_file }}';
           const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
 
-          core.setOutput("result", "Hello world");
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `result=Hello world\n`);
 
           console.log(`Changelog generated successfully: ${executionLog[executionLog.length - 1].result}`);
