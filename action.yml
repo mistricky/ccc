@@ -86,9 +86,11 @@ runs:
         else
           PREV_TAG="${{ inputs.from_tag }}"
         fi
+        
+        TO_REF="${{ steps.prev_tag.outputs.current_tag }}"
 
-        echo "Commits between ${{ PREV_TAG }} and ${{ steps.prev_tag.outputs.current_tag }}:"
-        LOG=$(git log ${{ PREV_TAG }}..${{ steps.prev_tag.outputs.current_tag }} --pretty=format:"%s")
+        echo "Commits between $PREV_TAG and $TO_REF:"
+        LOG=$(git log $PREV_TAG..$TO_REF --pretty=format:"%s")
         echo "from_tag=$PREV_TAG" >> $GITHUB_OUTPUT
         echo "to_ref=$TO_REF" >> $GITHUB_OUTPUT
         
