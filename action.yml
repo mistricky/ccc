@@ -154,6 +154,7 @@ runs:
 
     - name: Set result output
       id: output
+      shell: bash
       run: |
         CHANGELOG="${{ steps.extract_output.outputs.result }}"
         CHANGELOG="${CHANGELOG//'%'/'%25'}"
