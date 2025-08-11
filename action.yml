@@ -160,13 +160,4 @@ runs:
           const executionFile = '${{ steps.claude.outputs.execution_file }}';
           const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
 
-          let result = '';
-
-          for (let i = executionLog.length - 1; i >= 0; i--) {
-            if (executionLog[i].role === 'assistant') {
-              result = executionLog[i].result;
-              break;
-            }
-          }
-          
-          console.info(`Changelog result: ${executionLog[executionLog.length - 1].result}`);
+          core.setOutput("result", executionLog[executionLog.length - 1].result});
