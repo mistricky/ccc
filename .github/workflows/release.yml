@@ -53,7 +53,7 @@ jobs:
             
             ---
             
-            🔗 **Full Changelog**: https://github.com/mistricky/ccc/compare/${{ github.event.before || 'HEAD~1' }}...${{ steps.version.outputs.version }}  
+            🔗 **Full Changelog**: https://github.com/mistricky/ccc/compare/${{steps.changelog.outputs.from_tag}}...${{ steps.changelog.outputs.to_tag }}  
             ⚡ **Generated with**: [CCC (Claude Code Changelog)](https://github.com/mistricky/ccc)
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}

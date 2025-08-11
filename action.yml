@@ -55,6 +55,12 @@ outputs:
   result:
     description: 'Number of changes analyzed'
     value: ${{ steps.output.outputs.result }}
+  from_tag:
+    description: 'Starting tag for the changelog'
+    value: ${{ steps.prev_tag.outputs.from_tag }}
+  to_tag:
+    description: 'Ending reference for the changelog'
+    value: ${{ steps.prev_tag.outputs.to_ref }}
 
 runs:
   using: 'composite'
