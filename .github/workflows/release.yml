@@ -23,13 +23,11 @@ jobs:
         id: changelog
         uses: ./
         with:
-          from_tag: v0.1.15 
-          api_base_url: https://llm.jp.one2x.ai 
-          model: 'us.anthropic.claude-sonnet-4-20250514-v1:0'
-          small_fast_model: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
+          api_base_url: ${{ secrets.API_BASE_URL }} 
+          model: ${{ secrets.MODEL }} 
+          small_fast_model: ${{ secrets.SMALL_FAST_MODEL }} 
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          output_file: 'RELEASE_CHANGELOG.md'
           format: 'markdown'
 
       - name: Extract version from tag
