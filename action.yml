@@ -163,3 +163,4 @@ runs:
         CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
 
         echo "result=$CHANGELOG" >> $GITHUB_OUTPUT
+
