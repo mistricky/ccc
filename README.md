@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0  # Fetch full history for git analysis
       
       - name: Generate Changelog
-        uses: mistricky/ccc@v1
+        uses: mistricky/ccc@v0.2.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -53,7 +53,7 @@ jobs:
 
 ```yaml
 - name: Generate Changelog
-  uses: mistricky/ccc@v1
+  uses: mistricky/ccc@v0.2.2
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -66,7 +66,7 @@ jobs:
 
 ```yaml
 - name: Generate Changelog
-  uses: mistricky/ccc@v1
+  uses: mistricky/ccc@v0.2.2
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     use_bedrock: true
@@ -81,7 +81,7 @@ jobs:
 
 ```yaml
 - name: Generate Changelog
-  uses: mistricky/ccc@v1
+  uses: mistricky/ccc@v0.2.2
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
     use_vertex: true
@@ -141,7 +141,7 @@ jobs:
       
       - name: Generate Changelog
         id: generate
-        uses: mistricky/ccc@v1
+        uses: mistricky/ccc@v0.2.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
