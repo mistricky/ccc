@@ -72,7 +72,7 @@ runs:
         CURRENT_TAG="${GITHUB_REF##*/}"
         echo "Current tag: $CURRENT_TAG"
 
-        PREV_TAG=$(git describe --tags --abbrev=0 "$CURRENT_TAG"^)
+        PREV_TAG=$(git describe --tags --abbrev=0 "$CURRENT_TAG^")
         echo "Previous tag: $PREV_TAG"
 
         echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
