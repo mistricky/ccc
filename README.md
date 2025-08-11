@@ -99,8 +99,8 @@ jobs:
 | `anthropic_api_key` | Anthropic API key for Claude | - | No* |
 | `from_tag` | Start tag for diff (defaults to latest tag) | Latest tag | No |
 | `to_ref` | End reference for diff | `HEAD` | No |
-| `output_file` | Output changelog file path | `CHANGELOG.md` | No |
-| `format` | Output format (`markdown`, `json`) | `markdown` | No |
+| `small_fast_model` | Use small fast model for Claude | - | No |
+| `api_base_url` | API base URL for Claude (optional, defaults to Anthropic API) | - | No |
 | `model` | Claude model to use | `claude-3-5-sonnet-20241022` | No |
 | `use_bedrock` | Use Amazon Bedrock | `false` | No |
 | `use_vertex` | Use Google Vertex AI | `false` | No |
@@ -115,9 +115,9 @@ jobs:
 
 | Output | Description |
 |--------|-------------|
-| `changelog` | Generated changelog content |
-| `changelog_file` | Path to the generated changelog file |
-| `changes_count` | Number of changes analyzed |
+| `result` | Generated changelog content |
+| `from_tag` | Starting tag for the changelog |
+| `to_tag` | Ending reference for the changelog |
 
 ### Example Workflow with Outputs
 
@@ -131,8 +131,9 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     outputs:
-      changelog: ${{ steps.generate.outputs.changelog }}
-      changes_count: ${{ steps.generate.outputs.changes_count }}
+      changelog: ${{ steps.generate.outputs.result }}
+      from_tag: ${{ steps.generate.outputs.from_tag }}
+      to_tag: ${{ steps.generate.outputs.to_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -150,7 +151,14 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
-          body: ${{ steps.generate.outputs.changelog }}
+          body: |
+            ## 🤖 AI-Generated Changelog
+            
+            ${{ steps.generate.outputs.result }}
+            
+            ---
+            
+            🔗 **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.generate.outputs.from_tag }}...${{ steps.generate.outputs.to_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
