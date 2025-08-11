@@ -81,17 +81,15 @@ runs:
     - name: Prepare git diff for Claude analysis
       shell: bash
       run: |
-        # if [ -z "${{ inputs.from_tag }}" ]; then
-        #   FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
-        # else
-        #   FROM_TAG="${{ inputs.from_tag }}"
-        # fi
+        if [ -z "${{ inputs.from_tag }}" ]; then
+          PREV_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
+        else
+          PREV_TAG="${{ inputs.from_tag }}"
+        fi
 
-        FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
-
-        echo "Commits between ${{ FROM_TAG }} and ${{ steps.prev_tag.outputs.current_tag }}:"
-        LOG=$(git log ${{ FROM_TAG }}..${{ steps.prev_tag.outputs.current_tag }} --pretty=format:"%s")
-        echo "from_tag=$FROM_TAG" >> $GITHUB_OUTPUT
+        echo "Commits between ${{ PREV_TAG }} and ${{ steps.prev_tag.outputs.current_tag }}:"
+        LOG=$(git log ${{ PREV_TAG }}..${{ steps.prev_tag.outputs.current_tag }} --pretty=format:"%s")
+        echo "from_tag=$PREV_TAG" >> $GITHUB_OUTPUT
         echo "to_ref=$TO_REF" >> $GITHUB_OUTPUT
         
         # Create analysis prompt for Claude with actual commit data
@@ -99,13 +97,13 @@ runs:
         You are a technical writer creating a changelog for a software project.
         
         There are changes in the git repository between two points:
-          - From tag: $FROM_TAG
+          - From tag: $PREV_TAG
           - To reference: ${{ steps.prev_tag.outputs.current_tag }}
           - Commits: ${LOG}
 
         Please analyze the following git changes and generate a professional changelog in markdown format.
 
-        ## Commits from $FROM_TAG to $TO_REF:
+        ## Commits from $PREV_TAG to $TO_REF:
 
         ## Instructions:
         1. **Categorize changes** using standard changelog categories:
