@@ -52,15 +52,9 @@ inputs:
     default: 'us-central1'
 
 outputs:
-  changes_count:
-    description: 'Number of changes analyzed'
-    value: ${{ steps.output.outputs.changes_count }}
-  from_tag:
-    description: 'Starting tag used for analysis'
-    value: ${{ steps.output.outputs.from_tag }}
-  to_ref:
-    description: 'Ending reference used for analysis'  
-    value: ${{ steps.output.outputs.to_ref }}
+  result:
+    description: 'Generated changelog result'
+    value: ${{ steps.output.outputs.result }}
 
 runs:
   using: 'composite'
