@@ -39,29 +39,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
-      - name: Process changelog output
-        id: read_changelog
-        run: |
-          # Use the changelog output directly from CCC action
-          if [ -n "${{ steps.changelog.outputs.changelog }}" ]; then
-            echo "Using CCC generated changelog"
-            {
-              echo 'changelog<<EOF'
-              echo '${{ steps.changelog.outputs.changelog }}'
-              echo EOF
-            } >> $GITHUB_OUTPUT
-          elif [ -f "RELEASE_CHANGELOG.md" ]; then
-            echo "Using changelog file"
-            {
-              echo 'changelog<<EOF'
-              cat RELEASE_CHANGELOG.md
-              echo EOF
-            } >> $GITHUB_OUTPUT
-          else
-            echo "No changelog generated, using fallback"
-            echo 'changelog=Automated release from tag ${{ steps.version.outputs.version }}' >> $GITHUB_OUTPUT
-          fi
-
       - name: Create Release
         uses: actions/create-release@v1
         env:
@@ -72,33 +49,11 @@ jobs:
           body: |
             ## 🤖 AI-Generated Changelog
             
-            ${{ steps.read_changelog.outputs.changelog }}
+            ${{ steps.changelog.outputs.result }}
             
             ---
             
-            📊 **Release Stats**: ${{ steps.changelog.outputs.changes_count }} changes analyzed  
             🔗 **Full Changelog**: https://github.com/mistricky/ccc/compare/${{ github.event.before || 'HEAD~1' }}...${{ steps.version.outputs.version }}  
             ⚡ **Generated with**: [CCC (Claude Code Changelog)](https://github.com/mistricky/ccc)
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
-
-      - name: Upload changelog as artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelog-${{ steps.version.outputs.version }}
-          path: |
-            RELEASE_CHANGELOG.md
-          retention-days: 90
-
-      - name: Summary
-        run: |
-          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Changes analyzed**: ${{ steps.changelog.outputs.changes_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Release created**: ✅" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Changelog Preview" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`markdown" >> $GITHUB_STEP_SUMMARY
-          head -20 RELEASE_CHANGELOG.md >> $GITHUB_STEP_SUMMARY || echo "No changelog generated" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
