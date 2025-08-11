@@ -169,4 +169,4 @@ runs:
             }
           }
           
-          console.info(`Changelog result: ${executionLog}`);
+          console.info(`Changelog result: ${executionLog[executionLog.length - 1].result}`);
