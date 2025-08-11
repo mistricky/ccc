@@ -74,6 +74,7 @@ runs:
 
     - name: Prepare git diff for Claude analysis
       shell: bash
+      id: prepare
       run: |
         if [ -z "${{ inputs.from_tag }}" ]; then
           PREV_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
