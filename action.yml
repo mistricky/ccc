@@ -57,10 +57,10 @@ outputs:
     value: ${{ steps.output.outputs.result }}
   from_tag:
     description: 'Starting tag for the changelog'
-    value: ${{ steps.prev_tag.outputs.from_tag }}
+    value: ${{ steps.prev_tag.outputs.previous_tag }}
   to_tag:
     description: 'Ending reference for the changelog'
-    value: ${{ steps.prev_tag.outputs.to_ref }}
+    value: ${{ steps.prev_tag.outputs.current_tag }}
 
 runs:
   using: 'composite'
