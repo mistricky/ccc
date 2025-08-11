@@ -97,10 +97,6 @@ runs:
           - To reference: ${{ steps.prev_tag.outputs.current_tag }}
           - Commits: ${LOG}
 
-        Please analyze the following git changes and generate a professional changelog in markdown format.
-
-        ## Commits from $PREV_TAG to $TO_REF:
-
         ## Instructions:
         1. **Categorize changes** using standard changelog categories:
            - **Added**: New features
@@ -122,7 +118,7 @@ runs:
 
         4. **Focus on semantic meaning** rather than technical implementation details
 
-        Generate only the changelog content in markdown format without any explanatory text or metadata. Do not include version numbers or dates.
+        Output ONLY the changelog content in markdown format. Do not include any explanatory text, metadata, introductory phrases, or concluding remarks. Start directly with the changelog categories and items. Do not include version numbers or dates.
         EOF
 
     - name: Generate changelog with Claude Code Base Action
@@ -154,5 +150,4 @@ runs:
           const executionFile = '${{ steps.claude.outputs.execution_file }}';
           const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
 
-          console.log(`Changelog generated successfully: ${executionLog[executionLog.length - 1].result}`);
-          return "Hello"
+          return executionLog[executionLog.length - 1].result
