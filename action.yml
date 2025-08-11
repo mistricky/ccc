@@ -81,13 +81,13 @@ runs:
     - name: Prepare git diff for Claude analysis
       shell: bash
       run: |
-        FROM_TAG=''
+        # if [ -z "${{ inputs.from_tag }}" ]; then
+        #   FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
+        # else
+        #   FROM_TAG="${{ inputs.from_tag }}"
+        # fi
 
-        if [ -z "${{ inputs.from_tag }}" ]; then
-          FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
-        else
-          FROM_TAG="${{ inputs.from_tag }}"
-        fi
+        FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
 
         echo "Commits between ${{ FROM_TAG }} and ${{ steps.prev_tag.outputs.current_tag }}:"
         LOG=$(git log ${{ FROM_TAG }}..${{ steps.prev_tag.outputs.current_tag }} --pretty=format:"%s")
