@@ -155,3 +155,5 @@ runs:
           const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
 
           core.setOutput("result", executionLog[executionLog.length - 1].result);
+
+          console.log(`Changelog generated successfully: ${executionLog[executionLog.length - 1].result}`);
