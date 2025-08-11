@@ -66,59 +66,43 @@ runs:
   using: 'composite'
   steps:
     - name: Get previous tag
-      id: previoustag
-      uses: WyriHaximus/github-action-get-previous-tag@v1
-      with:
-        fallback: '0.0.0'
+      id: prev_tag
+      run: |
+        CURRENT_TAG="${GITHUB_REF##*/}"
+        echo "Current tag: $CURRENT_TAG"
+
+        PREV_TAG=$(git describe --tags --abbrev=0 "$CURRENT_TAG"^)
+        echo "Previous tag: $PREV_TAG"
+
+        echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+        echo "previous_tag=$PREV_TAG" >> $GITHUB_OUTPUT
 
     - name: Prepare git diff for Claude analysis
-      id: prepare
       shell: bash
       run: |
-        # Get the from tag if not specified
         if [ -z "${{ inputs.from_tag }}" ]; then
-          FROM_TAG="${{ steps.previoustag.outputs.tag }}"
+          FROM_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
         else
           FROM_TAG="${{ inputs.from_tag }}"
         fi
-        
-        TO_REF="${{ inputs.to_ref }}"
-        
+
+        echo "Commits between ${{ FROM_TAG }} and ${{ steps.prev_tag.outputs.current_tag }}:"
+        LOG=$(git log ${{ FROM_TAG }}..${{ steps.prev_tag.outputs.current_tag }} --pretty=format:"%s")
         echo "from_tag=$FROM_TAG" >> $GITHUB_OUTPUT
         echo "to_ref=$TO_REF" >> $GITHUB_OUTPUT
-        
-        # Get git log and diff
-        echo "Getting changes from $FROM_TAG to $TO_REF"
-        
-        # Get commit messages and store in variables
-        COMMIT_MESSAGES=$(git log --pretty=format:"%h - %s (%an, %ar)" "$FROM_TAG..$TO_REF" 2>/dev/null || echo "No commits found")
-        FILE_CHANGES=$(git diff --stat "$FROM_TAG..$TO_REF" 2>/dev/null || echo "No file changes found")
-        DETAILED_DIFF=$(git diff "$FROM_TAG..$TO_REF" | head -200 2>/dev/null || echo "No detailed changes available")
-        
-        # Count commits and files
-        COMMIT_COUNT=$(git rev-list --count "$FROM_TAG..$TO_REF" 2>/dev/null || echo "0")
-        echo "changes_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
         
         # Create analysis prompt for Claude with actual commit data
         cat > /tmp/changelog_prompt.md << EOF
         You are a technical writer creating a changelog for a software project.
+        
+        There are changes in the git repository between two points:
+          - From tag: $FROM_TAG
+          - To reference: ${{ steps.prev_tag.outputs.current_tag }}
+          - Commits: ${LOG}
 
         Please analyze the following git changes and generate a professional changelog in markdown format.
 
         ## Commits from $FROM_TAG to $TO_REF:
-        \`\`\`
-        $COMMIT_MESSAGES
-        \`\`\`
-
-        ## File Changes Summary:
-        \`\`\`
-        $FILE_CHANGES
-        \`\`\`
-
-        ## Detailed Changes (first 200 lines):
-        \`\`\`
-        $DETAILED_DIFF
-        \`\`\`
 
         ## Instructions:
         1. **Categorize changes** using standard changelog categories:
@@ -165,15 +149,21 @@ runs:
 
     - name: Set outputs
       id: output
-      shell: bash
-      run: |
-        # Get the changelog content from Claude's output (should be printed to stdout)
-        # The claude-code-base-action will have already executed and generated output
-        
-        # Set basic outputs
-        echo "changes_count=${{ steps.prepare.outputs.changes_count }}" >> $GITHUB_OUTPUT
-        echo "from_tag=${{ steps.prepare.outputs.from_tag }}" >> $GITHUB_OUTPUT  
-        echo "to_ref=${{ steps.prepare.outputs.to_ref }}" >> $GITHUB_OUTPUT
-        
-        # Note: The actual changelog content will come from Claude's direct output
-        # No file persistence needed - Claude will output the changelog directly
+      if: steps.claude.outputs.conclusion == 'success'
+      uses: actions/github-script@v7
+      with: 
+        script: |
+          const fs = require('fs');
+          const executionFile = '${{ steps.claude.outputs.execution_file }}';
+          const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8')); 
+
+          let result = '';
+
+          for (let i = executionLog.length - 1; i >= 0; i--) {
+            if (executionLog[i].role === 'assistant') {
+              result = executionLog[i].content;
+              break;
+            }
+          }
+          
+          console.info(`Changelog result: ${result}`);
