@@ -35,6 +35,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch full history for git analysis
+          filter: blob:none # Ensure Tag blob to not be fetched 
       
       - name: Generate Changelog
         uses: mistricky/ccc@v0.2.2
@@ -138,7 +139,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+          filter: blob:none
       - name: Generate Changelog
         id: generate
         uses: mistricky/ccc@v0.2.2
